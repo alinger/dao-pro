@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Noto Serif SC', serif;
+    background-color: #04060a;
+    color: #e5dec9;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+.font-calligraphy {
+  font-family: 'Ma Shan Zheng', cursive, 'Noto Serif SC', serif;
+}
+
+.font-serif-sc {
+  font-family: 'Noto Serif SC', serif;
+}
+
+/* Custom scrollbar and subtle glowing utilities */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(10, 15, 25, 0.4);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(197, 160, 89, 0.3);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(197, 160, 89, 0.6);
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(1.04); }
+}
+
+@keyframes flicker-fast {
+  0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 10px rgba(255, 213, 79, 0.7)); }
+  25% { opacity: 1; filter: drop-shadow(0 0 20px rgba(255, 240, 120, 0.95)); }
+  50% { opacity: 0.6; filter: drop-shadow(0 0 6px rgba(255, 170, 40, 0.5)); }
+  75% { opacity: 0.95; filter: drop-shadow(0 0 16px rgba(255, 230, 100, 0.85)); }
+}
+
+@keyframes energy-jitter {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-0.6px, 0.6px); }
+  50% { transform: translate(0.6px, -0.6px); }
+  75% { transform: translate(-0.4px, -0.4px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes heat-haze-shimmer {
+  0% {
+    transform: translateY(0) scaleY(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateY(-8px) scaleY(1.02);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateY(-16px) scaleY(1);
+    opacity: 0.45;
+  }
+}
+
+@keyframes thermal-expansion {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(1.16);
+    opacity: 0;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
+}
+
+.animate-flicker-fast {
+  animation: flicker-fast 0.16s infinite alternate ease-in-out;
+}
+
+.animate-energy-jitter {
+  animation: energy-jitter 0.08s infinite linear;
+}
+
+.animate-heat-haze {
+  animation: heat-haze-shimmer 3.2s ease-in-out infinite alternate;
+}
+
+.animate-thermal-wave {
+  animation: thermal-expansion 2.6s cubic-bezier(0.15, 0.8, 0.35, 1) infinite;
+}

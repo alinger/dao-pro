@@ -1,0 +1,6 @@
+{
+  "name": "道韵乾坤 · 3D五行八卦罗盘",
+  "description": "沉浸式道家五行八卦3D罗盘交互体验，结合阴阳流转粒子特效、动态能量场共鸣与多层罗盘手势盘旋。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
