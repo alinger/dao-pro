@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ElementType, ViewMode } from '../types/tao';
 import { FIVE_ELEMENTS, TRIGRAMS } from '../data/taoData';
-import { ChevronDown, ChevronUp, Sparkles, Compass, BookOpen } from 'lucide-react';
+import { ChevronDown, ChevronUp, Sparkles, Compass } from 'lucide-react';
 
 interface ElementSelectorProps {
   viewMode: ViewMode;
@@ -9,7 +9,6 @@ interface ElementSelectorProps {
   selectedTrigram: string | null;
   onSelectElement: (el: ElementType | null) => void;
   onSelectTrigram: (trigramId: string | null) => void;
-  onOpenEncyclopedia?: (topic: string) => void;
 }
 
 export const ElementSelector: React.FC<ElementSelectorProps> = ({
@@ -18,7 +17,6 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
   selectedTrigram,
   onSelectElement,
   onSelectTrigram,
-  onOpenEncyclopedia,
 }) => {
   const elementsList: ElementType[] = ['wood', 'fire', 'earth', 'metal', 'water'];
   const [activeTab, setActiveTab] = useState<'elements' | 'bagua'>('elements');
@@ -69,33 +67,13 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => {
-                const topic = selectedElement
-                  ? FIVE_ELEMENTS[selectedElement]?.name
-                  : selectedTrigram
-                  ? TRIGRAMS.find((t) => t.id === selectedTrigram)?.name || '八卦'
-                  : activeTab === 'elements'
-                  ? '五行'
-                  : '八卦';
-                onOpenEncyclopedia?.(topic);
-              }}
-              className="p-1 text-[#ffd54f] hover:text-[#fff] bg-[#c5a059]/15 hover:bg-[#c5a059]/30 border border-[#c5a059]/35 rounded-md transition-all cursor-pointer flex items-center gap-1 text-[12px] px-1.5"
-              title="考索道韵百科"
-            >
-              <BookOpen className="w-3 h-3 text-[#ffd54f]" />
-              <span>百科</span>
-            </button>
-
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-1 text-[#c5a059]/70 hover:text-[#ffd54f] rounded transition-colors cursor-pointer"
-              title={isCollapsed ? '展开面板' : '折叠面板'}
-            >
-              {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-            </button>
-          </div>
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1 text-[#c5a059]/70 hover:text-[#ffd54f] rounded transition-colors cursor-pointer"
+            title={isCollapsed ? '展开面板' : '折叠面板'}
+          >
+            {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+          </button>
         </div>
 
         {/* Content Body (Collapsible) */}

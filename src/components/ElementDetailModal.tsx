@@ -1,14 +1,13 @@
 import React from 'react';
 import { ElementType } from '../types/tao';
 import { FIVE_ELEMENTS, TRIGRAMS } from '../data/taoData';
-import { X, Sparkles, Compass, BookOpen } from 'lucide-react';
+import { X, Sparkles, Compass } from 'lucide-react';
 
 interface ElementDetailModalProps {
   selectedElement: ElementType | null;
   selectedTrigram: string | null;
   onClose: () => void;
   onSelectElement: (el: ElementType) => void;
-  onOpenEncyclopedia?: (topic: string) => void;
 }
 
 export const ElementDetailModal: React.FC<ElementDetailModalProps> = ({
@@ -16,7 +15,6 @@ export const ElementDetailModal: React.FC<ElementDetailModalProps> = ({
   selectedTrigram,
   onClose,
   onSelectElement,
-  onOpenEncyclopedia,
 }) => {
   const currentEl = selectedElement ? FIVE_ELEMENTS[selectedElement] : null;
   const currentTri = selectedTrigram
@@ -128,21 +126,6 @@ export const ElementDetailModal: React.FC<ElementDetailModalProps> = ({
             </p>
           </div>
         )}
-
-        {/* Footer with Dao Wisdom Encyclopedia Entry Button */}
-        <div className="mt-4 pt-3 border-t border-[#c5a059]/20 flex items-center justify-between">
-          <button
-            onClick={() => {
-              const topic = currentEl ? currentEl.name : currentTri ? currentTri.name : '';
-              if (topic) onOpenEncyclopedia?.(topic);
-            }}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#c5a059]/20 hover:bg-[#c5a059]/35 border border-[#c5a059]/40 hover:border-[#ffd54f] text-[13px] text-[#ffd54f] font-medium transition-all cursor-pointer shadow-sm"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>进入道韵百科研学（Google 联网考据） ➔</span>
-          </button>
-          <span className="text-[12px] text-[#c5a059]/60 font-serif-sc">典籍释微 · 易学象数</span>
-        </div>
       </div>
     </div>
   );

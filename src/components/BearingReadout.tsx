@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { BookOpen } from 'lucide-react';
 import {
   getBearingReading,
   polarPoint,
@@ -34,18 +33,14 @@ interface BearingReadoutProps {
   isMirroredDial?: boolean;
   /** 是否处于天球（浑天仪）展开态，用于轻微淡出避让 */
   dimmed?: boolean;
-  /** 打开道韵百科抽屉回调 */
-  onOpenEncyclopedia?: (mountainName: string) => void;
 }
 
 export const BearingReadout: React.FC<BearingReadoutProps> = ({
   angle,
   isMirroredDial = false,
   dimmed = false,
-  onOpenEncyclopedia,
 }) => {
   const reading = getBearingReading(angle, false);
-  const currentMountainRef = useRef<string>(reading.name);
 
   /* --- 命令式更新节点（每帧写，不触发 React 重渲染） --- */
   const needleRef = useRef<SVGGElement | null>(null);
@@ -113,7 +108,6 @@ export const BearingReadout: React.FC<BearingReadoutProps> = ({
       const full = getBearingReading(rawDeg, false);
       if (full.index === lastIndexRef.current) return;
       lastIndexRef.current = full.index;
-      currentMountainRef.current = full.name;
 
       const mountainColor = full.isYangMountain ? MOUNTAIN_COLOR.yang : MOUNTAIN_COLOR.yin;
 
@@ -191,11 +185,7 @@ export const BearingReadout: React.FC<BearingReadoutProps> = ({
        *   宽松 24+150+20+168+2 = 388
        *   紧凑 16+150+12+148+2 = 328
        * 文字列 148 > 最长行自然宽 138（「二十四山 · 每山十五度」），不会折行。 */}
-      <div
-        onClick={() => onOpenEncyclopedia?.(currentMountainRef.current || reading.name)}
-        title="点击查考道韵百科"
-        className="relative flex items-center gap-3 px-4 py-4 rounded-2xl bg-[#05070a]/92 backdrop-blur-md border border-[#c5a059]/50 shadow-[0_0_28px_rgba(0,0,0,0.85)] xl:gap-5 xl:px-6 pointer-events-auto cursor-pointer hover:border-[#ffd54f]/80 hover:shadow-[0_0_36px_rgba(197,160,89,0.35)] transition-all group"
-      >
+      <div className="relative flex items-center gap-3 px-4 py-4 rounded-2xl bg-[#05070a]/92 backdrop-blur-md border border-[#c5a059]/50 shadow-[0_0_28px_rgba(0,0,0,0.85)] xl:gap-5 xl:px-6">
         {/* ============ 迷你刻度盘（SVG，纯图元，无文字翻转风险） ============
          * 尺寸从 108 提到 150（1.39x）：盘面本身随文字放大后需要更大的画布，
          * 否则中心单字会顶到刻度圈内圈。 */}
@@ -337,19 +327,6 @@ export const BearingReadout: React.FC<BearingReadoutProps> = ({
           <span className="text-[14px] text-[#c5a059]/75 leading-tight mt-0.5">
             二十四山 · 每山十五度
           </span>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenEncyclopedia?.(currentMountainRef.current || reading.name);
-            }}
-            className="flex items-center gap-1.5 px-2.5 py-1 mt-1 rounded-md bg-[#c5a059]/15 hover:bg-[#c5a059]/30 border border-[#c5a059]/40 hover:border-[#ffd54f]/70 text-[12px] text-[#ffd54f] font-medium transition-all cursor-pointer w-fit group-hover:bg-[#c5a059]/25 shadow-sm"
-            title="查考道韵百科"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-[#ffd54f]" />
-            <span>道韵百科 · 研学 ➔</span>
-          </button>
         </div>
 
         {/* 镜像态角标：说明读数独立于贴图镜像 */}
