@@ -1,0 +1,74 @@
+name: Deploy to GitHub Pages
+
+# 触发条件：main 分支推送 + 手动触发。
+# 手动触发（workflow_dispatch）用于在不改代码时重新部署，
+# 例如首次在仓库 Settings 里开启 Pages 后立刻补一次部署。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# GitHub Pages 官方部署所需的权限：
+#   contents: read   → 拉取代码
+#   pages: write     → 写入 Pages 站点
+#   id-token: write  → OIDC 令牌，deploy-pages 靠它鉴权（无需个人 token）
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只允许一个部署在跑，避免并发推送导致 Pages 状态错乱。
+# cancel-in-progress: true 让新推送直接取代排队中的旧部署。
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # 用 npm ci 而非 npm install：严格按 package-lock.json 还原，
+      # 保证 CI 构建结果与本地一致（已验证 lockfile 与 package.json 同步）。
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      # VITE_BASE 必须是 /<仓库名>/ —— 项目型 Pages 站点跑在子路径下，
+      # 沿用默认的 '/' 会让 /assets/*.js 解析到 <user>.github.io/assets/ 而全部 404。
+      # 这里用 github.event.repository.name 自动取仓库名，改名后无需改工作流。
+      - name: Build
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/
+        run: npm run build
+
+      # 空的 .nojekyll 阻止 Pages 用 Jekyll 处理产物。
+      # 少了它，以下划线开头的文件/目录会被 Jekyll 直接丢弃。
+      - name: Disable Jekyll
+        run: touch dist/.nojekyll
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

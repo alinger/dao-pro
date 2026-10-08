@@ -9,6 +9,19 @@ const projectRoot = import.meta.dirname ?? fileURLToPath(new URL('.', import.met
 
 export default defineConfig(() => {
   return {
+    /**
+     * 部署基准路径。
+     *
+     * 默认 `'/'`（本地 dev / 根域名部署如 Vercel、Netlify）。
+     * GitHub Pages 的项目站点是子路径（https://<user>.github.io/<repo>/），
+     * 若保持 `'/'`，构建产物里的 `/assets/index-xxx.js` 会解析到
+     * `<user>.github.io/assets/...` → 全部 404、白屏。
+     * 故由环境变量注入：CI 里传 `VITE_BASE=/<repo>/`。
+     *
+     * 注意必须写成 `'./'` 之外的形式并**带结尾斜杠**，否则
+     * `/dao-pro` 会被当成文件名前缀而非目录。
+     */
+    base: process.env.VITE_BASE ?? '/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

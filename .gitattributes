@@ -1,0 +1,14 @@
+# 统一换行符，避免 Windows(CRLF) 与 CI(Linux/LF) 之间反复产生无意义 diff。
+* text=auto
+
+# YAML / shell 强制 LF：CRLF 会让 CI 里的多行 run 块解析异常。
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+
+# 二进制资源不做换行符转换，否则会被改坏。
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.woff binary
+*.woff2 binary
