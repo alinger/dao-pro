@@ -6,6 +6,11 @@
 *.yaml text eol=lf
 *.sh text eol=lf
 
+# 锁文件同样强制 LF。虽然 * text=auto 已会在仓库里归一化为 LF，
+# 这里显式钉死是为了防止 core.autocrlf=true 的 Windows 机器上
+# 检出成 CRLF 后 `bun install --frozen-lockfile` 解析异常。
+bun.lock text eol=lf
+
 # 二进制资源不做换行符转换，否则会被改坏。
 *.png binary
 *.jpg binary
