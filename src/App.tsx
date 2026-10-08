@@ -11,6 +11,8 @@ import { ViewMode, ElementType } from './types/tao';
 import { audioEngine } from './utils/audio';
 import { bearingStore } from './utils/bearingStore';
 import { BearingReadout } from './components/BearingReadout';
+import { DaoWisdomDrawer } from './components/DaoWisdomDrawer';
+import { UserManualModal } from './components/UserManualModal';
 import bgImage from './assets/images/taoist_celestial_nebula_1791281164720.jpg';
 
 export default function App() {
@@ -27,6 +29,11 @@ export default function App() {
   const [stepRequest, setStepRequest] = useState<number>(0);
   /** 拖拽手势模式：上提至 App，使顶栏「操盘」抽屉成为唯一入口（原在 Luopan3D 内部 state） */
   const [dragMode, setDragMode] = useState<DragMode>('spin');
+  /** 道韵百科侧边抽屉开合态与初始词条 */
+  const [isEncyclopediaOpen, setIsEncyclopediaOpen] = useState<boolean>(false);
+  const [encyclopediaTopic, setEncyclopediaTopic] = useState<string>('子');
+  /** 使用手册全景页面模态窗开合态 */
+  const [isUserManualOpen, setIsUserManualOpen] = useState<boolean>(false);
 
   // Armillary Sphere transformation progress (0 = Flat Luopan, 1 = Full 3D Armillary Sphere)
   const [armillaryProgress, setArmillaryProgress] = useState<number>(0);
@@ -142,6 +149,49 @@ export default function App() {
     audioEngine.playArmillarySnap();
   };
 
+  const handleOpenEncyclopedia = (topic?: string) => {
+    if (topic) setEncyclopediaTopic(topic);
+    setIsEncyclopediaOpen(true);
+    audioEngine.playSingingBowl(340, 1.2);
+  };
+
+  const handleOpenUserManual = useCallback(() => {
+    setIsUserManualOpen(true);
+    audioEngine.playSingingBowl(360, 1.4);
+  }, []);
+
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept when user is typing in form inputs
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        return;
+      }
+
+      if (e.key === 'h' || e.key === 'H' || e.key === '?') {
+        e.preventDefault();
+        setIsUserManualOpen((prev) => !prev);
+        audioEngine.playBronzeBell();
+      } else if (e.key === 'e' || e.key === 'E') {
+        e.preventDefault();
+        setIsEncyclopediaOpen((prev) => !prev);
+        audioEngine.playBronzeBell();
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        handleToggleAutoRotate();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        handleToggleMute();
+      } else if (e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        handleStep();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleToggleAutoRotate, handleToggleMute, handleStep]);
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#04060a] text-[#e5dec9] font-serif-sc select-none">
       {/* Atmospheric Background with Ethereal Celestial Panorama & Soft Flowing Vignette */}
@@ -171,6 +221,8 @@ export default function App() {
           setIsMirroredDial((prev) => !prev);
           audioEngine.playBronzeBell();
         }}
+        onToggleEncyclopedia={() => setIsEncyclopediaOpen((prev) => !prev)}
+        onOpenUserManual={handleOpenUserManual}
       />
 
       {/* Main 3D Canvas Scene */}
@@ -199,6 +251,7 @@ export default function App() {
           angle={currentAngle}
           isMirroredDial={isMirroredDial}
           dimmed={viewMode === 'meditation'}
+          onOpenEncyclopedia={handleOpenEncyclopedia}
         />
 
         {/* Real-time Energy Resonance Gauge (Left Wing) */}
@@ -239,6 +292,7 @@ export default function App() {
                 setSelectedTrigram(tri);
                 if (tri) setSelectedElement(null);
               }}
+              onOpenEncyclopedia={handleOpenEncyclopedia}
             />
           </div>
         </aside>
@@ -265,6 +319,26 @@ export default function App() {
             setSelectedTrigram(null);
           }}
           onSelectElement={(el) => setSelectedElement(el)}
+          onOpenEncyclopedia={handleOpenEncyclopedia}
+        />
+
+        {/* Dao Wisdom Encyclopedia Side Drawer (道韵百科 · 格物研玄) */}
+        <DaoWisdomDrawer
+          isOpen={isEncyclopediaOpen}
+          onClose={() => setIsEncyclopediaOpen(false)}
+          initialTopic={encyclopediaTopic}
+          currentAngle={currentAngle}
+        />
+
+        {/* User Manual Modal (使用手册 · 研览宝鉴) */}
+        <UserManualModal
+          isOpen={isUserManualOpen}
+          onClose={() => setIsUserManualOpen(false)}
+          onSelectMode={handleModeSelect}
+          onToggleAutoRotate={handleToggleAutoRotate}
+          onStep={handleStep}
+          onToggleArmillary={handleToggleArmillary}
+          onOpenEncyclopedia={handleOpenEncyclopedia}
         />
       </main>
     </div>

@@ -14,6 +14,8 @@ import {
   FlipHorizontal2,
   ChevronDown,
   X,
+  BookOpen,
+  HelpCircle,
 } from 'lucide-react';
 import { audioEngine } from '../utils/audio';
 import { SPEED_PRESETS, ROTATION_DEG_PER_SEC, SINGLE_STEP_DEG } from './Luopan3D';
@@ -38,6 +40,10 @@ interface HUDTopBarProps {
   /** 盘面文字镜像态（原左下角第三按钮，现已融合进顶栏） */
   isMirroredDial: boolean;
   onToggleMirrorDial: () => void;
+  /** 打开道韵百科抽屉 */
+  onToggleEncyclopedia?: () => void;
+  /** 打开使用手册全景页面 */
+  onOpenUserManual?: () => void;
 }
 
 export const HUDTopBar: React.FC<HUDTopBarProps> = ({
@@ -56,6 +62,8 @@ export const HUDTopBar: React.FC<HUDTopBarProps> = ({
   onDragModeChange,
   isMirroredDial,
   onToggleMirrorDial,
+  onToggleEncyclopedia,
+  onOpenUserManual,
 }) => {
   /** 「操盘」二级面板开合态（融合原左下角三按钮） */
   const [opPanelOpen, setOpPanelOpen] = useState(false);
@@ -379,6 +387,32 @@ export const HUDTopBar: React.FC<HUDTopBarProps> = ({
             </>
           )}
         </div>
+
+        {/* 道韵百科入口按钮 */}
+        <button
+          onClick={() => {
+            onToggleEncyclopedia?.();
+            audioEngine.playSingingBowl(340, 1.2);
+          }}
+          title="打开道韵百科（Google 实时联网考据五行八卦二十四山修学典籍 [E]）"
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-[15px] font-semibold text-[#f5ebd7] bg-[#c5a059]/15 hover:bg-[#c5a059]/30 border border-[#c5a059]/40 hover:border-[#ffd54f]/80 rounded-lg shadow-sm hover:shadow-[0_0_16px_rgba(197,160,89,0.35)] transition-all cursor-pointer shrink-0"
+        >
+          <BookOpen className="w-4 h-4 text-[#ffd54f] shrink-0" />
+          <span className="font-calligraphy hidden sm:inline">道韵百科</span>
+        </button>
+
+        {/* 使用手册入口按钮 */}
+        <button
+          onClick={() => {
+            onOpenUserManual?.();
+            audioEngine.playSingingBowl(360, 1.4);
+          }}
+          title="打开使用手册（全套视界、操盘手势、周天六环与快捷键指引 [H]）"
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-[15px] font-semibold text-[#f5ebd7] bg-[#c5a059]/20 hover:bg-[#c5a059]/35 border border-[#c5a059]/50 hover:border-[#ffd54f] rounded-lg shadow-sm hover:shadow-[0_0_16px_rgba(255,213,79,0.4)] transition-all cursor-pointer shrink-0"
+        >
+          <HelpCircle className="w-4 h-4 text-[#ffd54f] shrink-0" />
+          <span className="font-calligraphy hidden sm:inline">使用手册</span>
+        </button>
 
         {/* 静音 */}
         <button

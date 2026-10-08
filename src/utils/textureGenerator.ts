@@ -690,6 +690,85 @@ export function createCompassDialTexture(highlight?: DialHighlight): THREE.Canva
   }
 
   /**
+   * ★ 环间古典错金弦槽与连珠间隔纹（精修接缝工艺）
+   *
+   * 在每个同心环交界线（r1..r5）以及天池外沿 r0、盘沿 r6 处绘制工艺级间隔带：
+   * 1. 阴刻玄漆嵌槽（深古铜暗槽，宽 4.8px）：形成立体沉降凹槽，完美消灭相邻环径向分割线的参差错位感；
+   * 2. 内外双道错金弦（宽 1.0px，金珀色）：优雅收边，将各环内容封纳在清晰整肃的法器轨道之内；
+   * 3. 微细青铜连珠星目（Micro-Pearl Dots）：在 r2（五行/节气界）与 r4（廿四山/廿八宿界）以度数点缀连珠金星，呼应星宿经纬与周天气运。
+   */
+  ctx.save();
+  for (let idx = 1; idx < rings.length - 1; idx++) {
+    const r = rings[idx];
+    const seamHalfWidth = 2.4;
+
+    // 阴刻凹槽底色 (深古铜玄漆暗影槽)
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + seamHalfWidth, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r - seamHalfWidth, 0, Math.PI * 2, true);
+    ctx.fillStyle = 'rgba(8, 5, 3, 0.92)';
+    ctx.fill();
+
+    // 内侧错金细弦
+    ctx.beginPath();
+    ctx.arc(cx, cy, r - seamHalfWidth, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(225, 185, 85, 0.75)';
+    ctx.lineWidth = 1.0;
+    ctx.stroke();
+
+    // 外侧错金细弦
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + seamHalfWidth, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(225, 185, 85, 0.75)';
+    ctx.lineWidth = 1.0;
+    ctx.stroke();
+
+    // 中轴微细暗铜分界导线
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(175, 135, 60, 0.40)';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+
+    // 在关键大界环 r2 (五行/节气界) 与 r4 (廿四山/廿八宿界) 嵌刻古典青铜连珠星点
+    if (idx === 2 || idx === 4) {
+      const dotCount = idx === 2 ? 24 : 48;
+      for (let d = 0; d < dotCount; d++) {
+        const ang = (d * Math.PI * 2) / dotCount - Math.PI / 2;
+        const px = cx + Math.cos(ang) * r;
+        const py = cy + Math.sin(ang) * r;
+        ctx.beginPath();
+        ctx.arc(px, py, 1.4, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffe082';
+        ctx.shadowColor = 'rgba(255, 215, 0, 0.5)';
+        ctx.shadowBlur = 2.0;
+        ctx.fill();
+      }
+    }
+  }
+
+  // 天池内沿 r0 边界：高规制双金弦加固
+  ctx.beginPath();
+  ctx.arc(cx, cy, r0, 0, Math.PI * 2);
+  ctx.strokeStyle = '#ffd54f';
+  ctx.lineWidth = 2.4;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, r0 + 2.6, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(218, 165, 32, 0.60)';
+  ctx.lineWidth = 1.0;
+  ctx.stroke();
+
+  // 盘沿 r6 外边界：重装金圈
+  ctx.beginPath();
+  ctx.arc(cx, cy, r6, 0, Math.PI * 2);
+  ctx.strokeStyle = '#ffd54f';
+  ctx.lineWidth = 3.6;
+  ctx.stroke();
+  ctx.restore();
+
+  /**
    * ★ 环级聚光（压暗非目标环）—— 必须在所有环都画完之后执行。
    *
    * 实现方式：先算出「非保留环」的环形区域，再用 **source-atop** 叠一层
@@ -964,6 +1043,91 @@ export function createEarthBaseTexture(): THREE.CanvasTexture {
   ctx.arc(size / 2, size / 2, size * 0.44, 0, Math.PI * 2);
   ctx.strokeStyle = 'rgba(255, 213, 79, 0.4)';
   ctx.lineWidth = 4;
+  ctx.stroke();
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.anisotropy = 16;
+  return texture;
+}
+
+/**
+ * Procedural Bump/Height map to produce authentic tactile 3D relief engravings on ring seams
+ */
+export function createCompassBumpTexture(): THREE.CanvasTexture {
+  const size = 1024;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+
+  const cx = size / 2;
+  const cy = size / 2;
+  const maxR = size * 0.485;
+
+  // Neutral mid-gray base (128)
+  ctx.fillStyle = '#808080';
+  ctx.fillRect(0, 0, size, size);
+
+  const r0 = maxR * 0.25;
+  const r1 = maxR * 0.355;
+  const r2 = maxR * 0.515;
+  const r3 = maxR * 0.63;
+  const r4 = maxR * 0.79;
+  const r5 = maxR * 0.91;
+  const r6 = maxR * 1.0;
+  const rings = [r0, r1, r2, r3, r4, r5, r6];
+
+  // Deep recessed groove and raised relief strings at each ring boundary
+  for (let idx = 1; idx < rings.length - 1; idx++) {
+    const r = rings[idx];
+    const seamHalf = 2.4;
+
+    // Recessed shadow channel (dark = recessed groove)
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + seamHalf, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r - seamHalf, 0, Math.PI * 2, true);
+    ctx.fillStyle = '#222222';
+    ctx.fill();
+
+    // Raised inner gold cordons (bright = raised relief)
+    ctx.beginPath();
+    ctx.arc(cx, cy, r - seamHalf, 0, Math.PI * 2);
+    ctx.strokeStyle = '#f2f2f2';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    // Raised outer gold cordons
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + seamHalf, 0, Math.PI * 2);
+    ctx.strokeStyle = '#f2f2f2';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    // Raised pearl beaded studs (bright spots in height map)
+    const dotCount = idx === 2 ? 24 : idx === 4 ? 48 : 36;
+    for (let d = 0; d < dotCount; d++) {
+      const ang = (d * Math.PI * 2) / dotCount - Math.PI / 2;
+      const px = cx + Math.cos(ang) * r;
+      const py = cy + Math.sin(ang) * r;
+      ctx.beginPath();
+      ctx.arc(px, py, 1.8, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+    }
+  }
+
+  // Inner Tianchi raised boundary
+  ctx.beginPath();
+  ctx.arc(cx, cy, r0, 0, Math.PI * 2);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2.4;
+  ctx.stroke();
+
+  // Outer rim raised bevel
+  ctx.beginPath();
+  ctx.arc(cx, cy, r6, 0, Math.PI * 2);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3.0;
   ctx.stroke();
 
   const texture = new THREE.CanvasTexture(canvas);
