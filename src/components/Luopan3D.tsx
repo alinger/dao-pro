@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import {
   createTianchiTexture,
   createCompassDialTexture,
+  createCompassBumpTexture,
   createEarthBaseTexture,
   DIAL_HIGHLIGHTS,
   type DialHighlight,
@@ -11,82 +12,76 @@ import { audioEngine } from '../utils/audio';
 import { ElementType, ViewMode, ArmillaryRingConfig } from '../types/tao';
 
 /**
- * 6 道同心铜环（浑天仪的环层）。
+ * 6 道同心铜环（浑天仪天球环层）。
  *
- * **环带必须首尾相接（innerRadius[i] === outerRadius[i-1]），不能留缝。**
- *
- * 原因：盘面贴图 compassTex 是靠这 6 圈环体叠加拼出来的 ——
- * 每圈的 ringMat 都挂同一张 compassTex，UV 被重写为
- * `(mirrorSign * x / maxDialRadius) * 0.5 + 0.5`，即每圈 UV 都覆盖整个盘面。
- * 真正露出来的是各圈环带本身（shape.absarc(inner) .. shape.absarc(outer)）。
- *
- * 历史值留了 0.06 的缝（1.45~2.22 / 2.28~3.12 / … / 6.38~7.22）：
- * 斜俯视时这些缝被下层铜环的 bevel 侧面挡住，看不出来；
- * 但改成近正俯视（phi=0.06）后视角几乎垂直向下，缝隙直接漏出底下的
- * earthBaseTex 棕底 → 盘面上出现 5 条同心暗线，
- * 把色环切成条带（用户反馈「断成 2 个环」）、「木」字被竖线劈掉半边。
- *
- * 现改为无缝铺满 0 ~ 7.25：天池半径 1.38，第 0 圈从 0 起也不会遮住天池。
+ * 各环内外半径严格对齐贴图 createCompassDialTexture 中的 6 条内容环带（r0..r6）：
+ * - r0 = maxR * 0.25 = 1.76（贴图天池边）
+ * - r1 = maxR * 0.355 = 2.50（八卦外沿 / 五行内沿）
+ * - r2 = maxR * 0.515 = 3.62（五行外沿 / 节气内沿）
+ * - r3 = maxR * 0.63 = 4.43（节气外沿 / 廿四山内沿）
+ * - r4 = maxR * 0.79 = 5.56（廿四山外沿 / 廿八宿内沿）
+ * - r5 = maxR * 0.91 = 6.40（廿八宿外沿 / 周天铭文内沿）
+ * - r6 = maxR * 1.0 = 7.03（盘沿到 7.25）
  */
 export const ARMILLARY_RINGS: ArmillaryRingConfig[] = [
   {
-    name: '先天八卦环',
-    innerRadius: 0.00,
-    outerRadius: 2.22,
+    name: '先天八卦天运环',
+    innerRadius: 1.42,   // 周合天池（天池水罩外径 1.40），正对 r0 (1.76) 内侧暗区
+    outerRadius: 2.50,   // 正对贴图 r1 (2.50)：八卦与五行环精确分界线
     thickness: 0.10,
     tiltX: 0.52,   // ~30°
     tiltZ: 0.45,   // ~26°
-    baseSpinSpeed: 0.0022,
+    baseSpinSpeed: 0.0018,
     direction: 1,
   },
   {
     name: '五行生克环',
-    innerRadius: 2.22,   // = 上一圈 outerRadius，消除缝隙
-    outerRadius: 3.12,
+    innerRadius: 2.50,   // 接八卦环外沿 r1
+    outerRadius: 3.62,   // 正对贴图 r2 (3.62)：五行与二十四节气环精确分界线
     thickness: 0.10,
     tiltX: -0.68,  // ~-39°
     tiltZ: -0.42,  // ~-24°
-    baseSpinSpeed: -0.0025,
+    baseSpinSpeed: 0.0024,
     direction: -1,
   },
   {
     name: '道历二十四节气天环',
-    innerRadius: 3.12,   // = 上一圈 outerRadius
-    outerRadius: 4.16,
+    innerRadius: 3.62,   // 接五行环外沿 r2
+    outerRadius: 4.43,   // 正对贴图 r3 (4.43)：节气与二十四山神位环精确分界线
     thickness: 0.12,
     tiltX: 0.92,   // ~53°
     tiltZ: -0.72,  // ~-41°
-    baseSpinSpeed: 0.0028,
+    baseSpinSpeed: 0.0014,
     direction: 1,
   },
   {
     name: '二十四山神位天环',
-    innerRadius: 4.16,   // = 上一圈 outerRadius
-    outerRadius: 5.26,
+    innerRadius: 4.43,   // 接节气环外沿 r3
+    outerRadius: 5.56,   // 正对贴图 r4 (5.56)：二十四山与二十八宿精确分界线
     thickness: 0.12,
     tiltX: -1.18,  // ~-68°
     tiltZ: 0.88,   // ~50°
-    baseSpinSpeed: -0.0020,
+    baseSpinSpeed: 0.0020,
     direction: -1,
   },
   {
     name: '二十八宿四象天纬环',
-    innerRadius: 5.26,   // = 上一圈 outerRadius
-    outerRadius: 6.32,
+    innerRadius: 5.56,   // 接二十四山外沿 r4
+    outerRadius: 6.40,   // 正对贴图 r5 (6.40)：二十八宿与周天铭文精确分界线
     thickness: 0.14,
     tiltX: 1.42,   // ~81° (Meridian ring)
     tiltZ: 0.22,   // ~13°
-    baseSpinSpeed: 0.0016,
+    baseSpinSpeed: 0.0010,
     direction: 1,
   },
   {
     name: '周天赤道道历天铭环',
-    innerRadius: 6.32,   // = 上一圈 outerRadius
-    outerRadius: 7.25,   // = MAX_DIAL_RADIUS，铺满到盘沿
+    innerRadius: 6.40,   // 接二十八宿外沿 r5
+    outerRadius: 7.25,   // = MAX_DIAL_RADIUS，覆盖周天度数与黄帝纪年铭文到盘沿
     thickness: 0.15,
     tiltX: -0.32,  // ~-18°
     tiltZ: -1.38,  // ~-79° (Equatorial ring)
-    baseSpinSpeed: -0.0014,
+    baseSpinSpeed: 0.0007,
     direction: -1,
   },
 ];
@@ -505,6 +500,8 @@ export const Luopan3D: React.FC<Luopan3DProps> = ({
     tianchiTex.anisotropy = maxAniso;
     const compassTex = createCompassDialTexture();
     compassTex.anisotropy = maxAniso;
+    const compassBumpTex = createCompassBumpTexture();
+    compassBumpTex.anisotropy = maxAniso;
     const earthBaseTex = createEarthBaseTexture();
     earthBaseTex.anisotropy = maxAniso;
 
@@ -586,6 +583,8 @@ export const Luopan3D: React.FC<Luopan3DProps> = ({
      */
     const dialPlateMat = new THREE.MeshStandardMaterial({
       map: compassTex,
+      bumpMap: compassBumpTex,
+      bumpScale: 0.035,
       roughness: 0.62,
       metalness: 0.04,
       side: THREE.DoubleSide,
@@ -739,8 +738,8 @@ export const Luopan3D: React.FC<Luopan3DProps> = ({
         depth: config.thickness,
         bevelEnabled: true,
         bevelSegments: 2,
-        bevelSize: 0.02,
-        bevelThickness: 0.02,
+        bevelSize: 0.006,
+        bevelThickness: 0.008,
         curveSegments: 96,
       });
 
@@ -757,9 +756,8 @@ export const Luopan3D: React.FC<Luopan3DProps> = ({
 
       const ringMat = new THREE.MeshStandardMaterial({
         map: compassTex,
-        // 无缝化后第 0 圈变成覆盖 0~2.22 的实心盘（原先 1.45 起是环），
-        // 金属度 0.12 / 粗糙度 0.40 会让中心区反光偏亮、整盘显淡。
-        // 降金属度、提高粗糙度 → 回到原先哑光古铜的质感。
+        bumpMap: compassBumpTex,
+        bumpScale: 0.035,
         roughness: 0.62,
         metalness: 0.04,
         side: THREE.DoubleSide,
@@ -772,8 +770,8 @@ export const Luopan3D: React.FC<Luopan3DProps> = ({
       ringMesh.receiveShadow = true;
       spinGroup.add(ringMesh);
 
-      // Gold Bevel Edge Rings
-      const outerCollarGeo = new THREE.TorusGeometry(config.outerRadius, 0.025, 8, 96);
+      // Gold Bevel Edge Rings (精确贴合环边缘)
+      const outerCollarGeo = new THREE.TorusGeometry(config.outerRadius, 0.02, 8, 96);
       const collarMat = new THREE.MeshStandardMaterial({
         color: 0xdeb86b,
         roughness: 0.2,
@@ -781,27 +779,52 @@ export const Luopan3D: React.FC<Luopan3DProps> = ({
       });
       const outerCollar = new THREE.Mesh(outerCollarGeo, collarMat);
       outerCollar.rotation.x = Math.PI / 2;
-      outerCollar.position.y = 0.06 + config.thickness / 2;
-      // 标记为「金边圈」，供每帧按形态显隐（正俯视时它会横穿盘面文字）
+      outerCollar.position.y = 0.06;
       outerCollar.userData.isArmillaryCollar = true;
       spinGroup.add(outerCollar);
 
-      const innerCollarGeo = new THREE.TorusGeometry(config.innerRadius, 0.025, 8, 96);
+      const innerCollarGeo = new THREE.TorusGeometry(config.innerRadius, 0.02, 8, 96);
       const innerCollar = new THREE.Mesh(innerCollarGeo, collarMat);
       innerCollar.rotation.x = Math.PI / 2;
-      innerCollar.position.y = 0.06 + config.thickness / 2;
+      innerCollar.position.y = 0.06;
       innerCollar.userData.isArmillaryCollar = true;
       spinGroup.add(innerCollar);
 
-      // 4 Quadrant Gimbal Pivots
+      // ★ 微细浮雕纹路间隔带（青铜连珠乳钉浮雕圈）
+      // 依附于 spinGroup，在环自转、单步拨动或浑天差速转动时，纹理严格随环同步旋转
+      const beadCount = Math.round(config.outerRadius * 16);
+      const beadGeo = new THREE.SphereGeometry(0.018, 8, 6);
+      const beadMat = new THREE.MeshStandardMaterial({
+        color: 0xf5d070,
+        roughness: 0.22,
+        metalness: 0.94,
+      });
+      const reliefBeadsMesh = new THREE.InstancedMesh(beadGeo, beadMat, beadCount);
+      reliefBeadsMesh.userData.isArmillaryCollar = true;
+      const beadDummy = new THREE.Object3D();
+      for (let b = 0; b < beadCount; b++) {
+        const beadAngle = (b * Math.PI * 2) / beadCount;
+        beadDummy.position.set(
+          Math.cos(beadAngle) * config.outerRadius,
+          0.065, // 微微凸起于铜环顶面 0.06，在场景光线下形成立体浮雕高光与接触阴影
+          Math.sin(beadAngle) * config.outerRadius
+        );
+        beadDummy.scale.set(1, 0.72, 1);
+        beadDummy.updateMatrix();
+        reliefBeadsMesh.setMatrixAt(b, beadDummy.matrix);
+      }
+      reliefBeadsMesh.instanceMatrix.needsUpdate = true;
+      spinGroup.add(reliefBeadsMesh);
+
+      // 4 Quadrant Gimbal Pivots (居中镶嵌于铜环厚度侧翼)
       for (let p = 0; p < 4; p++) {
         const angle = (p * Math.PI) / 2;
-        const pivotPinGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.16, 12);
+        const pivotPinGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.12, 12);
         const pivotPin = new THREE.Mesh(pivotPinGeo, collarMat);
         pivotPin.position.set(
-          Math.cos(angle) * (config.outerRadius + 0.04),
-          0.06,
-          Math.sin(angle) * (config.outerRadius + 0.04)
+          Math.cos(angle) * (config.outerRadius + 0.02),
+          0.06 - config.thickness / 2,
+          Math.sin(angle) * (config.outerRadius + 0.02)
         );
         pivotPin.rotation.z = Math.PI / 2;
         pivotPin.userData.isArmillaryCollar = true;
@@ -928,13 +951,19 @@ export const Luopan3D: React.FC<Luopan3DProps> = ({
         node.gimbalGroup.rotation.x += (targetTiltX - node.gimbalGroup.rotation.x) * lerpGimbal;
         node.gimbalGroup.rotation.z += (targetTiltZ - node.gimbalGroup.rotation.z) * lerpGimbal;
 
-        node.localAngle +=
-          node.config.baseSpinSpeed * node.config.direction * speedMultiplier * ringFrameScale;
-        node.spinGroup.rotation.y = globalMasterAngleRef.current * (1 - currentProgress) + node.localAngle;
+        // 差速自转仅在浑天仪展开状态下驱动；合盘归位时平滑收拢回 0，避免错位
+        if (currentProgress > 0.02) {
+          node.localAngle +=
+            node.config.baseSpinSpeed * node.config.direction * speedMultiplier * ringFrameScale * Math.min(1, currentProgress * 1.5);
+        } else {
+          node.localAngle *= Math.pow(0.85, ringFrameScale);
+          if (Math.abs(node.localAngle) < 0.0001) node.localAngle = 0;
+        }
+
+        // 基础自转锚定 globalMasterAngle，差速随 progress 比例展开，保证合盘时各环角度严丝合缝
+        node.spinGroup.rotation.y = globalMasterAngleRef.current + node.localAngle * currentProgress;
 
         // 罗盘形态下整组隐藏（盘面已由独立圆盘承载），立体形态恢复。
-        // 不再需要 userData.isArmillaryCollar 的单独处理，
-        // 也不再改 spinGroup.position.y。
         node.spinGroup.visible = showRings;
       });
 
