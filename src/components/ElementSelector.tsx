@@ -35,10 +35,10 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
 
   return (
     <div className="w-full">
-      <div className="p-3 bg-black/60 backdrop-blur-md border border-[#c5a059]/30 rounded-xl shadow-2xl text-xs w-full transition-all hover:border-[#c5a059]/55">
+      <div className="p-4 bg-black/68 backdrop-blur-md border border-[#c5a059]/40 rounded-xl shadow-2xl text-[18px] w-full transition-all hover:border-[#c5a059]/55">
         {/* Header with Tab Switcher & Collapse Toggle */}
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#c5a059]/20">
-          <div className="flex items-center gap-1 bg-black/50 p-0.5 rounded-lg border border-[#c5a059]/25 text-[11px]">
+          <div className="flex items-center gap-1 bg-black/50 p-0.5 rounded-lg border border-[#c5a059]/25 text-[16px]">
             <button
               onClick={() => {
                 setActiveTab('elements');
@@ -82,7 +82,7 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
             {activeTab === 'elements' ? (
               /* TAB 1: FIVE ELEMENTS */
               <div>
-                <div className="flex items-center justify-between mb-1.5 text-[10px] text-[#c5a059]/75">
+                <div className="flex items-center justify-between mb-1.5 text-[15px] text-[#c5a059]/85">
                   <span>五行相生 · 循序而行</span>
                   {selectedElement && (
                     <button
@@ -109,19 +109,19 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
                         }`}
                         style={{ color: el.color }}
                       >
-                        <span className="font-calligraphy text-base font-bold">{el.name}</span>
-                        <span className="text-[10px] opacity-75">{el.yinYang}</span>
+                        <span className="font-calligraphy text-[24px] font-bold leading-tight">{el.name}</span>
+                        <span className="text-[15px] opacity-75">{el.yinYang}</span>
                       </button>
                     );
                   })}
                 </div>
 
                 {selectedElement && (
-                  <div className="pt-1.5 border-t border-[#c5a059]/15 flex items-center justify-between text-[11px] text-[#e8dcb8]">
+                  <div className="pt-1.5 border-t border-[#c5a059]/15 flex items-center justify-between text-[16px] text-[#e8dcb8]">
                     <span>生：{FIVE_ELEMENTS[FIVE_ELEMENTS[selectedElement].generates].name}</span>
                     <span aria-hidden="true" className="text-[#c5a059]/40">·</span>
                     <span>克：{FIVE_ELEMENTS[FIVE_ELEMENTS[selectedElement].conquers].name}</span>
-                    <span className="text-[10px] text-[#ffd54f]/90">
+                    <span className="text-[15px] text-[#ffd54f]/90">
                       方位：{FIVE_ELEMENTS[selectedElement].direction}
                     </span>
                   </div>
@@ -130,7 +130,7 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
             ) : (
               /* TAB 2: BAGUA TRIGRAMS */
               <div>
-                <div className="flex items-center justify-between mb-1.5 text-[10px] text-[#c5a059]/75">
+                <div className="flex items-center justify-between mb-1.5 text-[15px] text-[#c5a059]/85">
                   <span>八卦分立 · 乾坤定位</span>
                   {selectedTrigram && (
                     <button
@@ -155,8 +155,8 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
                             : 'border-[#c5a059]/20 hover:border-[#c5a059]/50 text-[#e8dcb8]/85 hover:text-[#f5ebd7]'
                         }`}
                       >
-                        <span className="text-sm font-semibold">{tri.name}</span>
-                        <span className="text-xs opacity-80">{tri.symbol}</span>
+                        <span className="text-[20px] font-semibold leading-tight">{tri.name}</span>
+                        <span className="text-[17px] opacity-80 leading-tight">{tri.symbol}</span>
                       </button>
                     );
                   })}

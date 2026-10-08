@@ -78,6 +78,18 @@ export const FIVE_ELEMENTS: Record<string, FiveElementInfo> = {
   },
 };
 
+/**
+ * 八卦数据
+ * --------
+ * ⚠️ **数组顺序 = 先天（伏羲）方位顺序，不是罗盘落位顺序**
+ * 乾正南 → 兑东南 → 离正东 → 震东北 → 巽西南 → 坎正西 → 艮西北 → 坤正北。
+ * 渲染到罗盘时**必须用每个卦自带的 `angleLater`（后天/文王方位）**，
+ * 绝不能用「数组下标 × 45°」—— 两者序完全不同，会整体错位
+ * （实测艮会从应在的东北 45° 落到正西 270°，偏 135°）。
+ *
+ * `angleLater` 与 MOUNTAINS_24.angle 同一约定：0=子/正北，顺时针，四正各 90°。
+ * 四个卦山与二十四山逐一对应：坎0 · 艮45 · 巽135 · 离180 · 坤225 · 兑270 · 乾315。
+ */
 export const TRIGRAMS: TrigramInfo[] = [
   {
     id: 'qian',
@@ -88,6 +100,7 @@ export const TRIGRAMS: TrigramInfo[] = [
     element: 'metal',
     directionEarly: '正南',
     directionLater: '西北',
+    angleLater: 315,
     numberEarly: 1,
     numberLater: 6,
     attribute: '健',
@@ -103,6 +116,7 @@ export const TRIGRAMS: TrigramInfo[] = [
     element: 'metal',
     directionEarly: '东南',
     directionLater: '正西',
+    angleLater: 270,
     numberEarly: 2,
     numberLater: 7,
     attribute: '悦',
@@ -118,6 +132,7 @@ export const TRIGRAMS: TrigramInfo[] = [
     element: 'fire',
     directionEarly: '正东',
     directionLater: '正南',
+    angleLater: 180,
     numberEarly: 3,
     numberLater: 9,
     attribute: '丽',
@@ -133,6 +148,7 @@ export const TRIGRAMS: TrigramInfo[] = [
     element: 'wood',
     directionEarly: '东北',
     directionLater: '正东',
+    angleLater: 90,
     numberEarly: 4,
     numberLater: 3,
     attribute: '动',
@@ -148,6 +164,7 @@ export const TRIGRAMS: TrigramInfo[] = [
     element: 'wood',
     directionEarly: '西南',
     directionLater: '东南',
+    angleLater: 135,
     numberEarly: 5,
     numberLater: 4,
     attribute: '入',
@@ -163,6 +180,7 @@ export const TRIGRAMS: TrigramInfo[] = [
     element: 'water',
     directionEarly: '正西',
     directionLater: '正北',
+    angleLater: 0,
     numberEarly: 6,
     numberLater: 1,
     attribute: '陷',
@@ -178,6 +196,7 @@ export const TRIGRAMS: TrigramInfo[] = [
     element: 'earth',
     directionEarly: '西北',
     directionLater: '东北',
+    angleLater: 45,
     numberEarly: 7,
     numberLater: 8,
     attribute: '止',
@@ -193,6 +212,7 @@ export const TRIGRAMS: TrigramInfo[] = [
     element: 'earth',
     directionEarly: '正北',
     directionLater: '西南',
+    angleLater: 225,
     numberEarly: 8,
     numberLater: 2,
     attribute: '顺',

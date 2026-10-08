@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Luopan3D } from './components/Luopan3D';
-import { HUDTopBar } from './components/HUDTopBar';
+import { HUDTopBar, DragMode } from './components/HUDTopBar';
 import { EnergyGauge } from './components/EnergyGauge';
 import { ElementSelector } from './components/ElementSelector';
 import { ElementDetailModal } from './components/ElementDetailModal';
@@ -9,6 +9,8 @@ import { ArmillaryControls } from './components/ArmillaryControls';
 import { TaoCalendarBadge } from './components/TaoCalendarBadge';
 import { ViewMode, ElementType } from './types/tao';
 import { audioEngine } from './utils/audio';
+import { bearingStore } from './utils/bearingStore';
+import { BearingReadout } from './components/BearingReadout';
 import bgImage from './assets/images/taoist_celestial_nebula_1791281164720.jpg';
 
 export default function App() {
@@ -17,8 +19,14 @@ export default function App() {
   const [selectedTrigram, setSelectedTrigram] = useState<string | null>(null);
   const [isAutoRotate, setIsAutoRotate] = useState<boolean>(true);
   const [isMuted, setIsMuted] = useState<boolean>(false);
-  const [speedScale, setSpeedScale] = useState<number>(1.0); // 1.0 = Default slow, serene and dignified
+  const [speedScale, setSpeedScale] = useState<number>(1.0); // 1.0 = 1°/s，秒针式基准速度
   const [targetOrientationAngle, setTargetOrientationAngle] = useState<number | null>(null);
+  /** 罗盘 3D 贴图左右镜像态（上提至 App，供 HUD 读数感知） */
+  const [isMirroredDial, setIsMirroredDial] = useState<boolean>(false);
+  /** 单步请求计数器：每次 +1 传给 Luopan3D 触发一次拨齿（用计数而非 boolean 以支持连点） */
+  const [stepRequest, setStepRequest] = useState<number>(0);
+  /** 拖拽手势模式：上提至 App，使顶栏「操盘」抽屉成为唯一入口（原在 Luopan3D 内部 state） */
+  const [dragMode, setDragMode] = useState<DragMode>('spin');
 
   // Armillary Sphere transformation progress (0 = Flat Luopan, 1 = Full 3D Armillary Sphere)
   const [armillaryProgress, setArmillaryProgress] = useState<number>(0);
@@ -29,6 +37,13 @@ export default function App() {
   const [currentAngle, setCurrentAngle] = useState<number>(0);
   const [rotationSpeed, setRotationSpeed] = useState<number>(0);
   const [energyLevel, setEnergyLevel] = useState<number>(35);
+
+  // 镜像态 ref：供 60fps 高频回调读取，避免闭包捕获旧值
+  const isMirroredDialRef = useRef<boolean>(false);
+  useEffect(() => {
+    isMirroredDialRef.current = isMirroredDial;
+    bearingStore.publish(currentAngle, isMirroredDial);
+  }, [isMirroredDial, currentAngle]);
 
   // Smooth animation interpolation for armillary transformation
   useEffect(() => {
@@ -51,6 +66,8 @@ export default function App() {
   const handleRotationChange = useCallback((angle: number, speed: number) => {
     setCurrentAngle(angle);
     setRotationSpeed(speed);
+    // 广播给 HUD 方位读数（命令式更新，不触发额外 React 渲染）
+    bearingStore.publish(angle, isMirroredDialRef.current);
   }, []);
 
   const handleEnergyChange = useCallback((energy: number) => {
@@ -65,6 +82,17 @@ export default function App() {
   const handleToggleMute = () => {
     const muted = audioEngine.toggleMute();
     setIsMuted(muted);
+  };
+
+  /**
+   * 拨齿：手动推进一个刻度。
+   * 同时自动暂停自转——单步的语义是「我要停在这一格精调」，
+   * 若继续自转，拨完立刻又飘走，失去单步意义。
+   */
+  const handleStep = () => {
+    setIsAutoRotate(false);
+    setStepRequest((prev) => prev + 1);
+    audioEngine.playBronzeBell();
   };
 
   const handleModeSelect = (mode: ViewMode) => {
@@ -135,6 +163,14 @@ export default function App() {
         onToggleArmillary={handleToggleArmillary}
         speedScale={speedScale}
         onSpeedScaleChange={setSpeedScale}
+        onStep={handleStep}
+        dragMode={dragMode}
+        onDragModeChange={setDragMode}
+        isMirroredDial={isMirroredDial}
+        onToggleMirrorDial={() => {
+          setIsMirroredDial((prev) => !prev);
+          audioEngine.playBronzeBell();
+        }}
       />
 
       {/* Main 3D Canvas Scene */}
@@ -149,6 +185,20 @@ export default function App() {
           isAutoRotate={isAutoRotate}
           speedScale={speedScale}
           targetOrientationAngle={targetOrientationAngle}
+          isMirroredDial={isMirroredDial}
+          stepRequest={stepRequest}
+          dragMode={dragMode}
+          onToggleMirrorDial={() => {
+            setIsMirroredDial((prev) => !prev);
+            audioEngine.playBronzeBell();
+          }}
+        />
+
+        {/* Real-time 24-Direction Bearing Readout (below compass center, DOM layer — never mirrored) */}
+        <BearingReadout
+          angle={currentAngle}
+          isMirroredDial={isMirroredDial}
+          dimmed={viewMode === 'meditation'}
         />
 
         {/* Real-time Energy Resonance Gauge (Left Wing) */}
@@ -158,8 +208,14 @@ export default function App() {
           energyLevel={energyLevel}
         />
 
-        {/* Right HUD Column: Tao Calendar & Wisdom Selectors (Unified Vertical Stack - Zero Overlap) */}
-        <aside className="absolute top-4 right-6 z-20 flex flex-col items-end gap-2.5 max-w-[285px] w-full pointer-events-none">
+        {/* Right HUD Column: Tao Calendar & Wisdom Selectors (Unified Vertical Stack - Zero Overlap)
+         * max-w 分档 300/360（实测推导，见 scripts/probe-aside-width.mjs）：
+         *   360px 是 1920 宽下右侧留白充裕时的舒适值；
+         *   300px 是窄视口（1024x768）下的「免费下限」——道历面板高度 320px、
+         *   折行 16 处与 360px 完全一致；再窄到 280px 高度就跳到 344px 开始劣化。
+         * 低于 xl(1280) 用 300px：读数面板同步压到 328 宽后，
+         * 1024 下两者间隙由 -66px 转为正值，不再重叠。 */}
+        <aside className="absolute top-4 right-6 z-20 flex flex-col items-end gap-3 max-w-[300px] xl:max-w-[360px] w-full pointer-events-none">
           <div className="pointer-events-auto w-full">
             <TaoCalendarBadge
               currentAngle={currentAngle}

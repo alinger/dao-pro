@@ -75,8 +75,23 @@ export const EnergyGauge: React.FC<EnergyGaugeProps> = ({
   const mountainIdx = Math.floor(((normalizedDeg + 7.5) % 360) / 15);
   const currentMountain = MOUNTAINS_24[mountainIdx] || MOUNTAINS_24[0];
 
-  // Dynamic Yin-Yang balance ratio influenced by motion and angle
-  const yangRatio = Math.round(50 + Math.sin((normalizedDeg * Math.PI) / 180) * 15 + rotationSpeed * 12);
+  /**
+   * Threshold for "the dial is actually turning".
+   *
+   * rotationSpeed is now rad/s (was: an inertia-only value that was always 0
+   * during auto-rotation). The app's own speed range is 0.25x–3x of 1°/s, i.e.
+   * 0.0044–0.0524 rad/s, so a fixed 0.05 threshold would mean only the fastest
+   * preset ever registered. 0.012 rad/s ≈ 0.7°/s splits the presets sensibly:
+   * 悠缓 reads as calm, 沉稳/灵动 read as active.
+   */
+  const ACTIVE_SPEED_THRESHOLD = 0.012;
+  const isActivelyTurning = rotationSpeed > ACTIVE_SPEED_THRESHOLD;
+
+  // Dynamic Yin-Yang balance ratio influenced by motion and angle.
+  // Normalise the speed term against the fastest preset so the bar always uses
+  // its full range instead of barely moving at 1°/s.
+  const speedNorm = Math.min(1, rotationSpeed / 0.0524);
+  const yangRatio = Math.round(50 + Math.sin((normalizedDeg * Math.PI) / 180) * 15 + speedNorm * 12);
   const yinRatio = 100 - yangRatio;
 
   // High-frequency Particle Overflow Canvas Animation
@@ -456,7 +471,7 @@ export const EnergyGauge: React.FC<EnergyGaugeProps> = ({
         />
 
         {/* Top Resonance Status Ribbon */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 border border-[#ffd54f]/50 backdrop-blur-md text-xs text-[#ffe082] shadow-[0_0_20px_rgba(255,213,79,0.35)] animate-flicker-fast">
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 border border-[#ffd54f]/50 backdrop-blur-md text-[16px] text-[#ffe082] shadow-[0_0_20px_rgba(255,213,79,0.35)] animate-flicker-fast">
           <Sparkles className="w-3.5 h-3.5 text-[#ffd54f]" />
           <span className="font-serif-sc tracking-wider font-semibold">
             太虚气场共振 · 灵光折射热浪
@@ -473,7 +488,7 @@ export const EnergyGauge: React.FC<EnergyGaugeProps> = ({
         ref={containerRef}
         onClick={handleCardClick}
         title="拨动罗盘或点击激荡气场共鸣"
-        className={`relative p-3.5 backdrop-blur-md rounded-xl max-w-[265px] text-xs transition-all duration-300 cursor-pointer select-none ${
+        className={`relative p-4 backdrop-blur-md rounded-xl max-w-[340px] text-[18px] transition-all duration-300 cursor-pointer select-none ${
           isResonanceSurge
             ? 'bg-black/80 border-2 border-[#ffd54f] shadow-[0_0_35px_rgba(255,213,79,0.55),inset_0_0_20px_rgba(255,213,79,0.22)] animate-energy-jitter'
             : 'bg-black/55 border border-[#c5a059]/30 shadow-2xl hover:border-[#c5a059]/55'
@@ -490,14 +505,14 @@ export const EnergyGauge: React.FC<EnergyGaugeProps> = ({
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#c5a059]/20">
           <div className="flex items-center gap-1.5">
             <span
-              className={`font-serif-sc font-medium text-sm transition-colors ${
+              className={`font-serif-sc font-medium text-[20px] transition-colors ${
                 isResonanceSurge ? 'text-[#ffd54f] font-bold drop-shadow-[0_0_8px_rgba(255,213,79,0.9)]' : 'text-[#f5ebd7]'
               }`}
             >
               气场共鸣仪
             </span>
             {isResonanceSurge && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#ffd54f]/25 text-[#ffd54f] border border-[#ffd54f]/70 animate-flicker-fast flex items-center gap-1 shadow-[0_0_10px_rgba(255,213,79,0.5)]">
+              <span className="px-2 py-0.5 rounded text-[14px] font-bold bg-[#ffd54f]/25 text-[#ffd54f] border border-[#ffd54f]/70 animate-flicker-fast flex items-center gap-1 shadow-[0_0_10px_rgba(255,213,79,0.5)]">
                 <Volume2 className="w-2.5 h-2.5 text-[#ffd54f] animate-pulse" />
                 <span>嗡鸣共振</span>
               </span>
@@ -509,7 +524,7 @@ export const EnergyGauge: React.FC<EnergyGaugeProps> = ({
               <Zap className="w-3.5 h-3.5 text-[#ffd54f] animate-flicker-fast" />
             )}
             <span
-              className={`font-cinzel tabular-nums font-bold transition-all text-sm ${
+              className={`font-cinzel tabular-nums font-bold transition-all text-[22px] ${
                 isResonanceSurge
                   ? 'text-[#ffe082] drop-shadow-[0_0_12px_rgba(255,213,79,0.9)] scale-110'
                   : 'text-[#c5a059]'
@@ -532,9 +547,9 @@ export const EnergyGauge: React.FC<EnergyGaugeProps> = ({
 
         {/* Collapsed Mini Summary */}
         {isCollapsed && (
-          <div className="flex items-center justify-between text-[11px] text-[#e8dcb8]/90 font-serif-sc pt-0.5">
+          <div className="flex items-center justify-between text-[15px] text-[#e8dcb8]/90 font-serif-sc pt-0.5">
             <span className="text-[#ffd54f]">{currentMountain.name}山 ({normalizedDeg}°)</span>
-            <span className="text-[#c5a059]/70 text-[10px]">{rotationSpeed > 0.05 ? '运转充盈' : '恬淡中和'}</span>
+            <span className="text-[#c5a059]/80 text-[14px]">{isActivelyTurning ? '运转充盈' : '恬淡中和'}</span>
           </div>
         )}
 
@@ -542,10 +557,10 @@ export const EnergyGauge: React.FC<EnergyGaugeProps> = ({
         {!isCollapsed && (
           <>
             {/* Real-time Direction & Degree */}
-            <div className="grid grid-cols-2 gap-2 mb-2.5 text-[11px]">
+            <div className="grid grid-cols-2 gap-2 mb-3 text-[16px]">
               <div className="flex flex-col">
-                <span className="text-[#c5a059]/75 text-[10px]">罗盘天向</span>
-                <span className="font-serif-sc font-semibold text-[#f5ebd7] text-sm">
+                <span className="text-[#c5a059]/80 text-[15px]">罗盘天向</span>
+                <span className="font-serif-sc font-semibold text-[#f5ebd7] text-[20px]">
                   {currentMountain.name}山 ({currentMountain.element === 'water' ? '水' :
                     currentMountain.element === 'fire' ? '火' :
                     currentMountain.element === 'wood' ? '木' :
@@ -553,8 +568,8 @@ export const EnergyGauge: React.FC<EnergyGaugeProps> = ({
                 </span>
               </div>
               <div className="flex flex-col">
-                <span className="text-[#c5a059]/75 text-[10px]">周天度数</span>
-                <span className="font-mono tabular-nums text-[#f5ebd7] text-sm">
+                <span className="text-[#c5a059]/80 text-[15px]">周天度数</span>
+                <span className="font-mono tabular-nums text-[#f5ebd7] text-[20px]">
                   {normalizedDeg.toString().padStart(3, '0')}°
                 </span>
               </div>
@@ -562,7 +577,7 @@ export const EnergyGauge: React.FC<EnergyGaugeProps> = ({
 
             {/* Yin-Yang Balance Dynamic Bar */}
             <div className="space-y-1 mb-2.5">
-              <div className="flex justify-between text-[10px] text-[#e8dcb8]/85 font-serif-sc">
+              <div className="flex justify-between text-[15px] text-[#e8dcb8]/85 font-serif-sc">
                 <span>阳气 · {yangRatio}%</span>
                 <span>阴仪 · {yinRatio}%</span>
               </div>
@@ -584,14 +599,14 @@ export const EnergyGauge: React.FC<EnergyGaugeProps> = ({
 
             {/* Dynamic Energy Waveform Bar visualizer */}
             <div className="space-y-1">
-              <div className="flex justify-between text-[10px] text-[#c5a059]/80">
+              <div className="flex justify-between text-[15px] text-[#c5a059]/85">
                 <span>灵力振荡频度</span>
                 <span
                   className={`font-mono tabular-nums font-semibold ${
                     isResonanceSurge ? 'text-[#ffd54f] animate-flicker-fast' : 'text-[#c5a059]'
                   }`}
                 >
-                  {isResonanceSurge ? '九天共鸣 · 气场冲霄' : rotationSpeed > 0.05 ? '活跃充盈' : '恬淡中和'}
+                  {isResonanceSurge ? '九天共鸣 · 气场冲霄' : isActivelyTurning ? '活跃充盈' : '恬淡中和'}
                 </span>
               </div>
               <div className="flex items-center gap-1 h-3.5 pt-0.5">

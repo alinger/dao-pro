@@ -24,18 +24,18 @@ export const ElementDetailModal: React.FC<ElementDetailModalProps> = ({
   if (!currentEl && !currentTri) return null;
 
   return (
-    <div className="fixed inset-x-4 bottom-6 sm:bottom-8 sm:right-8 sm:left-auto sm:w-[420px] z-40 animate-in fade-in slide-in-from-bottom-4 duration-200">
-      <div className="bg-[#0b0e14]/90 backdrop-blur-xl border border-[#c5a059]/40 rounded-2xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] text-[#e8dcb8]">
+    <div className="fixed inset-x-4 bottom-6 sm:bottom-8 sm:right-8 sm:left-auto sm:w-[560px] z-40 animate-in fade-in slide-in-from-bottom-4 duration-200">
+      <div className="bg-[#0b0e14]/90 backdrop-blur-xl border border-[#c5a059]/40 rounded-2xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.8)] text-[#e8dcb8]">
         {/* Header with Title and Close Button */}
         <div className="flex items-center justify-between pb-3 border-b border-[#c5a059]/20">
           <div className="flex items-center gap-2.5">
             <span
-              className="text-2xl font-bold font-calligraphy"
+              className="text-[30px] font-bold font-calligraphy leading-tight"
               style={{ color: currentEl ? currentEl.color : '#f5ebd7' }}
             >
               {currentEl ? `${currentEl.name} · 五行行度` : `${currentTri?.name}卦 (${currentTri?.nature})`}
             </span>
-            <span className="text-xs text-[#c5a059]/80 font-serif-sc">
+            <span className="text-[18px] text-[#c5a059]/80 font-serif-sc">
               {currentEl ? currentEl.nature : `先天气数 ${currentTri?.numberEarly} · 后天 ${currentTri?.numberLater}`}
             </span>
           </div>
@@ -49,26 +49,26 @@ export const ElementDetailModal: React.FC<ElementDetailModalProps> = ({
 
         {/* Content for Five Element */}
         {currentEl && (
-          <div className="mt-3 space-y-3.5 text-xs">
+          <div className="mt-3 space-y-3.5 text-[18px]">
             <p className="leading-relaxed text-[#f0e6d2]/90 font-serif-sc">
               {currentEl.description}
             </p>
 
             <div className="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-black/40 border border-[#c5a059]/15">
               <div>
-                <span className="text-[#c5a059]/70 text-[10px]">方位枢纽</span>
+                <span className="text-[#c5a059]/85 text-[15px]">方位枢纽</span>
                 <p className="font-medium text-[#f5ebd7]">{currentEl.direction}</p>
               </div>
               <div>
-                <span className="text-[#c5a059]/70 text-[10px]">四季节律</span>
+                <span className="text-[#c5a059]/85 text-[15px]">四季节律</span>
                 <p className="font-medium text-[#f5ebd7]">{currentEl.season}</p>
               </div>
             </div>
 
             {/* Generation & Conquering Interactive Cycle */}
-            <div className="flex items-center justify-between pt-1 text-xs">
+            <div className="flex items-center justify-between pt-1 text-[18px]">
               <div className="flex items-center gap-1.5">
-                <span className="text-[#c5a059]/70">相生：</span>
+                <span className="text-[#c5a059]/85">相生：</span>
                 <button
                   onClick={() => onSelectElement(currentEl.generates)}
                   className="px-2 py-0.5 rounded border border-[#c5a059]/30 text-[#f5ebd7] hover:bg-[#c5a059]/20 transition-colors"
@@ -78,7 +78,7 @@ export const ElementDetailModal: React.FC<ElementDetailModalProps> = ({
               </div>
 
               <div className="flex items-center gap-1.5">
-                <span className="text-[#c5a059]/70">相克：</span>
+                <span className="text-[#c5a059]/85">相克：</span>
                 <button
                   onClick={() => onSelectElement(currentEl.conquers)}
                   className="px-2 py-0.5 rounded border border-rose-900/50 text-[#f5ebd7] hover:bg-rose-900/30 transition-colors"
@@ -92,7 +92,7 @@ export const ElementDetailModal: React.FC<ElementDetailModalProps> = ({
 
         {/* Content for Trigram */}
         {currentTri && (
-          <div className="mt-3 space-y-3 text-xs">
+          <div className="mt-3 space-y-3 text-[18px]">
             {/* Visual Yao Lines Display */}
             <div className="flex items-center gap-4 p-2.5 rounded-lg bg-black/40 border border-[#c5a059]/15">
               <div className="flex flex-col gap-1 items-center justify-center pl-2">
@@ -112,10 +112,10 @@ export const ElementDetailModal: React.FC<ElementDetailModalProps> = ({
 
               <div className="flex-1 space-y-1">
                 <div className="flex justify-between">
-                  <span className="text-[#c5a059]/70">卦德：{currentTri.attribute}</span>
-                  <span className="text-[#c5a059]/70">象征：{currentTri.family}</span>
+                  <span className="text-[#c5a059]/85">卦德：{currentTri.attribute}</span>
+                  <span className="text-[#c5a059]/85">象征：{currentTri.family}</span>
                 </div>
-                <div className="text-[11px] text-[#f5ebd7]">
+                <div className="text-[16px] text-[#f5ebd7]">
                   先天方位：{currentTri.directionEarly} · 后天方位：{currentTri.directionLater}
                 </div>
               </div>
