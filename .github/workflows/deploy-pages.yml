@@ -30,16 +30,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      # ★ 必须用 Bun，不能用 actions/setup-node 的 `cache: npm`。
+      #
+      # 本仓库的锁文件是 bun.lock（0bdea68 删除了 package-lock.json、
+      # 32ad9ed 新增 bun.lock —— 项目已从 npm 切到 Bun）。
+      # 而 `cache: npm` 会让 actions/setup-node 去找 package-lock.json 算缓存 key，
+      # **找不到就在 "Setup Node" 这一步直接失败**（注意：不是失败在安装步骤）：
+      #   Error: Dependencies lock file is not found ... Supported file patterns:
+      #   package-lock.json, npm-shrinkwrap.json, yarn.lock
+      # 这正是前三次部署（#4/#5/#6）失败的原因。
+      #
+      # 顺带也不要再写 `npm ci`：它同样硬依赖 package-lock.json。
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 22
-          cache: npm
+          # 不固定小版本：bun.lock 是 lockfileVersion 2 的文本格式，
+          # 用当前稳定版读取最稳妥。需要锁定时改成具体版本号即可。
+          bun-version: latest
 
-      # 用 npm ci 而非 npm install：严格按 package-lock.json 还原，
-      # 保证 CI 构建结果与本地一致（已验证 lockfile 与 package.json 同步）。
+      # --frozen-lockfile：严格按 bun.lock 安装，不解析、不回写锁文件。
+      # 锁文件与 package.json 不一致时直接报错，等于自带一致性校验。
+      # （已核对：11 个 dependencies + 9 个 devDependencies 全部命中 bun.lock）
       - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+        run: bun install --frozen-lockfile
 
       # VITE_BASE 必须是 /<仓库名>/ —— 项目型 Pages 站点跑在子路径下，
       # 沿用默认的 '/' 会让 /assets/*.js 解析到 <user>.github.io/assets/ 而全部 404。
@@ -47,7 +60,7 @@ jobs:
       - name: Build
         env:
           VITE_BASE: /${{ github.event.repository.name }}/
-        run: npm run build
+        run: bun run build
 
       # 空的 .nojekyll 阻止 Pages 用 Jekyll 处理产物。
       # 少了它，以下划线开头的文件/目录会被 Jekyll 直接丢弃。
