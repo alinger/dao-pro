@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="道韵乾坤 太极罗盘">
+  <title>道韵乾坤 · 太极罗盘</title>
+  <circle cx="32" cy="32" r="31" fill="#0a0d14"/>
+  <circle cx="32" cy="32" r="29.5" fill="none" stroke="#c5a059" stroke-width="1.6" opacity="0.75"/>
+  <circle cx="32" cy="32" r="27" fill="#c5a059"/>
+  <path d="M32 5a13.5 13.5 0 0 1 0 27 13.5 13.5 0 0 0 0 27 27 27 0 0 1 0-54z" fill="#0a0d14"/>
+  <circle cx="32" cy="18.5" r="4.2" fill="#0a0d14"/>
+  <circle cx="32" cy="45.5" r="4.2" fill="#c5a059"/>
+</svg>

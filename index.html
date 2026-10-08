@@ -3,6 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- 站点图标：太极罗盘。放在 public/ 下由 Vite 原样拷到产物根目录。
+         没有这一行时，浏览器会去请求 /favicon.ico 并拿到 404（部署后在控制台可见）。 -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- 移动端浏览器地址栏配色，与盘面底色一致 -->
+    <meta name="theme-color" content="#0a0d14" />
     <title>道韵乾坤 · 3D五行八卦罗盘</title>
     <meta name="description" content="沉浸式道家五行八卦3D罗盘交互体验，结合阴阳流转粒子特效、动态能量场共鸣与多层罗盘手势盘旋。" />
     <meta property="og:title" content="道韵乾坤 · 3D五行八卦罗盘" />
